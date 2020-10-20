@@ -3,6 +3,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+from triangulation import triangulation
 
 
 def draw_camera(mtx, h_size=1280, rvec=np.array([0.0,0.0,0.0]), tvec=np.matrix([0.0,0.0,0.0]).T, color='b'):
@@ -36,11 +37,11 @@ def draw_board(rvec,tvec, color, nx=10, ny=7, grid_width=20):
     for x in range(0,nx*grid_width,grid_width):
         p0 = world2cam([x, 0, 0], rmtx, tvec)
         p1 = world2cam([x, (ny-1)*grid_width, 0], rmtx, tvec)
-        ax.plot([p0[0],p1[0]], [p0[1],p1[1]], [p0[2],p1[2]], color)
+        ax.plot([p0[0],p1[0]], [p0[1],p1[1]], [p0[2],p1[2]], color, alpha=0.1)
     for y in range(0,ny*grid_width,grid_width):
         p0 = world2cam([0, y, 0], rmtx, tvec)
         p1 = world2cam([(nx-1)*grid_width, y, 0], rmtx, tvec)
-        ax.plot([p0[0],p1[0]], [p0[1],p1[1]], [p0[2],p1[2]], color)
+        ax.plot([p0[0],p1[0]], [p0[1],p1[1]], [p0[2],p1[2]], color, alpha=0.1)
         
     p0 = world2cam([0, 0, 0], rmtx, tvec)
     p1 = world2cam([0, (ny-1)*grid_width, 0], rmtx, tvec)
@@ -84,24 +85,35 @@ if __name__ == '__main__':
 
     cam1_mtx = np.loadtxt('cam1_intrisic_mtx.txt')
     cam2_mtx = np.loadtxt('cam2_intrisic_mtx.txt')
-    dist = np.loadtxt('cam1_distortion_param.txt')
+    dist1 = np.loadtxt('cam1_distortion_param.txt')
+    dist2 = np.loadtxt('cam2_distortion_param.txt')
+    
     rvecs = np.loadtxt('cam1_chessboard_r.txt')
     tvecs = np.loadtxt('cam1_chessboard_t.txt')
+    
+    cam1_points = np.loadtxt('cam1_points.txt')
+    cam2_points = np.loadtxt('cam2_points.txt')
 
-    r = np.loadtxt('extrinsic_r.txt')
-    t = np.matrix(np.loadtxt('extrinsic_t.txt')).T
+    R = np.loadtxt('extrinsic_r.txt')
+    T = np.matrix(np.loadtxt('extrinsic_t.txt')).T
 
-    rvec, _ = cv2.Rodrigues(r)
-
+    rvec, _ = cv2.Rodrigues(R)
 
     draw_camera(cam1_mtx, color='blue')
-    draw_camera(cam2_mtx, rvec=rvec, tvec=t, color='red')
+    draw_camera(cam2_mtx, rvec=rvec, tvec=T, color='red')
 
     colors = "bgrcmyk"
     for i in range(15):
         color = colors[i%7]
         #print(i, color)
+        cam1_point = cam1_points[i].reshape([-1,2])
+        cam2_piont = cam2_points[i].reshape([-1,2])
+        point3d, _, _ = triangulation(cam1_point, cam2_piont, 
+                                      R,T,
+                                      cam1_mtx,  dist1,  0,
+                                      cam2_mtx, dist2, 0)
 
+        ax.scatter3D(point3d[:,0], point3d[:,1], point3d[:,2], color=color)
         draw_board(rvecs[i], tvecs[i], color)
 
     set_axes_equal(ax)
