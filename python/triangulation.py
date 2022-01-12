@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 
 def undistortPoints(points, intrinsic, distortion):
+    assert points.shape[1]==2
     n = points.shape[0]
     cc_x = intrinsic[0,2]
     cc_y = intrinsic[1,2]
