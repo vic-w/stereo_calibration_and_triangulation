@@ -32,7 +32,13 @@ def world2cam(world_point, rmtx, tvec):
     cam_point = np.array(cam_point).squeeze()
     return cam_point
     
-def draw_board(rvec,tvec, color, nx=10, ny=7, grid_width=20):
+def draw_board(rvec, tvec, color, nx=10, ny=7, grid_width=20):
+    assert rvec.shape == (3,) 
+    assert tvec.shape == (3,) 
+    #旋转和平移向量，
+    #必须是一个3个元素的1维向量，
+    #而不是一个3x1或3x3的二维矩阵
+    
     rmtx, _ = cv2.Rodrigues(rvec)
     for x in range(0,nx*grid_width,grid_width):
         p0 = world2cam([x, 0, 0], rmtx, tvec)
