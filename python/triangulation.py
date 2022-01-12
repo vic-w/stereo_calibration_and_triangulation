@@ -2,6 +2,38 @@
 import numpy as np
 import cv2
 
+def undistortPoints(points, intrinsic, distortion):
+    n = points.shape[0]
+    cc_x = intrinsic[0,2]
+    cc_y = intrinsic[1,2]
+    fc_x = intrinsic[0,0]
+    fc_y = intrinsic[1,1]
+    k1 = distortion[0]
+    k2 = distortion[1]
+    k3 = distortion[4]
+    p1 = distortion[2]
+    p2 = distortion[3]
+
+    undistort_points = []
+    for i in range(n):
+        x,y = points[i]
+        x_distort = (x-cc_x)/fc_x
+        y_distort = (y-cc_y)/fc_y
+        #print(x_distort, y_distort)
+        
+        x_iter = x_distort
+        y_iter = y_distort
+        for j in range(20):
+            r_2 = x_iter**2 + y_iter**2
+            k_radial =  1 + k1 * r_2 + k2 * r_2**2 + k3 * r_2**3;
+            delta_x = 2*p1*x_iter*y_iter + p2*(r_2 + 2*x_iter**2)
+            delta_y = p1 * (r_2 + 2*y_iter**2) + 2*p2*x_iter*y_iter
+            x_iter = (x_distort - delta_x)/k_radial;
+            y_iter = (y_distort - delta_y)/k_radial;
+            #print(x_iter, y_iter)
+        undistort_points.append([x_iter, y_iter])
+    return np.array(undistort_points)
+    
 def triangulation(xL, xR, 
                          R,T,
                          left_intrinsic,  kc_left,  alpha_c_left,
@@ -16,11 +48,13 @@ def triangulation(xL, xR,
     #                            [0,          fc_left[1], cc_left[1]],
     #                            [0,          0,          1         ]])
                       
-    xt = cv2.undistortPoints(xL, left_intrinsic, kc_left).reshape([-1,2])
+                      
+    #此处用自己实现的undistortPoints函数替换了cv2中的undistortPoints函数
+    #xt = cv2.undistortPoints(xL, left_intrinsic, kc_left).reshape([-1,2])
+    xt = undistortPoints(xL, left_intrinsic, kc_left).reshape([-1,2])
     
-
-    
-    xtt = cv2.undistortPoints(xR, right_intrinsic, kc_right).reshape([-1,2])
+    #xtt = cv2.undistortPoints(xR, right_intrinsic, kc_right).reshape([-1,2])
+    xtt = undistortPoints(xR, right_intrinsic, kc_right).reshape([-1,2])
     
     # 转换为齐次坐标
     xt = np.hstack((xt,np.ones([N, 1]))).T
