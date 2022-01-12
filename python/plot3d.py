@@ -6,7 +6,7 @@ import cv2
 from triangulation import triangulation
 
 
-def draw_camera(mtx, h_size=1280, rvec=np.array([0.0,0.0,0.0]), tvec=np.matrix([0.0,0.0,0.0]).T, color='b'):
+def draw_camera(ax, mtx, h_size=1280, rvec=np.array([0.0,0.0,0.0]), tvec=np.matrix([0.0,0.0,0.0]).T, color='b'):
     fx = mtx[0,0] / h_size * 100
     fy = mtx[1,1] / h_size * 100
     cx = mtx[0,2] / h_size * 100
@@ -32,7 +32,9 @@ def world2cam(world_point, rmtx, tvec):
     cam_point = np.array(cam_point).squeeze()
     return cam_point
     
-def draw_board(rvec, tvec, color, nx=10, ny=7, grid_width=20):
+def draw_board(ax, rvec, tvec, color, nx=10, ny=7, grid_width=20):
+    rvec = np.array(rvec)
+    tvec = np.array(tvec)
     assert rvec.shape == (3,) 
     assert tvec.shape == (3,) 
     #旋转和平移向量，
@@ -105,8 +107,8 @@ if __name__ == '__main__':
 
     rvec, _ = cv2.Rodrigues(R)
 
-    draw_camera(cam1_mtx, color='blue')
-    draw_camera(cam2_mtx, rvec=rvec, tvec=T, color='red')
+    draw_camera(ax, cam1_mtx, color='blue')
+    draw_camera(ax, cam2_mtx, rvec=rvec, tvec=T, color='red')
 
     colors = "bgrcmyk"
     for i in range(15):
@@ -120,7 +122,7 @@ if __name__ == '__main__':
                                       cam2_mtx, dist2, 0)
 
         ax.scatter3D(point3d[:,0], point3d[:,1], point3d[:,2], color=color)
-        draw_board(rvecs[i], tvecs[i], color)
+        draw_board(ax, rvecs[i], tvecs[i], color)
 
     set_axes_equal(ax)
     plt.show()
