@@ -88,7 +88,7 @@ def set_axes_equal(ax):
 
 if __name__ == '__main__':
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection = '3d')
 
 
     cam1_mtx = np.loadtxt('cam1_intrisic_mtx.txt')
